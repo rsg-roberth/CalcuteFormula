@@ -1,6 +1,11 @@
+using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using WebApplication1.Applications.Commands;
 using WebApplication1.Domain.Interfaces;
 using WebApplication1.Infra;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +19,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<GuaranteedSavingsDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("GuaranteedSavings")));
 
 builder.Services.AddScoped<ICalculateFormulaRepository, CalculateFormulaRepository>();
+builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 
+builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<BaseCalculateFormulaCommandValidator>());
 
 var app = builder.Build();
 

@@ -1,4 +1,6 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using WebApplication1.Applications.Commands;
 using WebApplication1.Domain;
 using WebApplication1.Domain.Interfaces;
 
@@ -10,16 +12,18 @@ namespace WebApplication1.Controllers
     {      
         private readonly ILogger<CalculateFormulaController> _logger;
         private readonly ICalculateFormulaRepository _repository;
+        private readonly IMediator _mediator;
 
-        public CalculateFormulaController(ILogger<CalculateFormulaController> logger, ICalculateFormulaRepository repository)
+        public CalculateFormulaController(ILogger<CalculateFormulaController> logger, ICalculateFormulaRepository repository, IMediator mediator)
         {
             _logger = logger;
             _repository = repository;
+            _mediator = mediator;
         }
 
         [HttpGet("id")]
         public async Task<IActionResult> Get(Guid id)
-        {
+        {            
             var result = await _repository.GetByIdAsync(id);
             return Ok(result);                        
         }
@@ -32,26 +36,26 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(CalculateFormula entity)
+        public async Task<IActionResult> Post(CreateCalculateFormulaCommand command)
         {
-            await _repository.CreateAsync(entity);
+            var validator = new BaseCalculateFormulaCommandValidator();
+            var formula = validator.Validate(command);
+
+            await _mediator.Send(command);
             return Ok();
         }
 
-        [HttpPut("id")]
-        public async Task<IActionResult> Put(Guid id)
+        [HttpPut]
+        public async Task<IActionResult> Put(UpdateCalculateFormulaCommand command)
         {
-            var result = await _repository.GetByIdAsync(id);
-            result.ChangeName("Teste editando");
-            await _repository.UpdateAsync(result);
+            await _mediator.Send(command);
             return Ok();
         }
 
         [HttpDelete("id")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var result = await _repository.GetByIdAsync(id);            
-            await _repository.DeleteAsync(result);
+            await _mediator.Send(new DeleteCalculateFormulaCommand(id));            
             return Ok();
         }
     }
